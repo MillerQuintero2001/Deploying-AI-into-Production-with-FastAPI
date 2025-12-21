@@ -1,4 +1,4 @@
-from sentiment_model import SentimentAnalyzer, test_api_key, PATH_TO_MODEL
+from sentiment_model import SentimentAnalyzer,initialize_rate_limiter, test_api_key, PATH_TO_MODEL
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
@@ -25,6 +25,7 @@ def load_model():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     load_model()
+    initialize_rate_limiter(requests_per_minute=3)
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown

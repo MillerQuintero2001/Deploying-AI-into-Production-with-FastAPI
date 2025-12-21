@@ -127,7 +127,11 @@ def verify_api_key(api_key: str = Depends(api_key_header)):
     return api_key
 
 
-rate_limiter = RateLimiter(requests_per_minute=5)
+rate_limiter = None
+
+def initialize_rate_limiter(requests_per_minute: int = 10):
+    global rate_limiter
+    rate_limiter = RateLimiter(requests_per_minute=requests_per_minute)
 
 # Check api key and rate limit
 def test_api_key(api_key: str = Depends(api_key_header)):
