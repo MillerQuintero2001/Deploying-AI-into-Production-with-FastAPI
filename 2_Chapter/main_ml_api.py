@@ -72,4 +72,3 @@ if __name__ == "__main__":
 # curl -X POST "http://localhost:8080/analyze" \
 #      -H "Content-Type: application/json" \
 #      -d '{"text": "This is great, I can totally relate."}'
-

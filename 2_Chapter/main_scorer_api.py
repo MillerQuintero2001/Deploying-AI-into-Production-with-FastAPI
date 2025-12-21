@@ -39,7 +39,7 @@ def predict_trust(comment: CommentMetrics):
     score = model.predict(features)
     return {
         "trust_score": round(score, 2),
-        "comment_metrics": comment.dict()
+        "comment_metrics": comment.model_dump()
     }
     
 if __name__ == "__main__":
