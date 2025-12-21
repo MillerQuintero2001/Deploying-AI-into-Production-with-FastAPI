@@ -47,17 +47,18 @@ def analyze_comment(request: CommentRequest):
         
     try:
         result = sentiment_model(request.text)
+
+        return CommentResponse(
+        text=request.text,
+        sentiment=result["label"],
+        confidence=result["confidence"]
+    )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Error during model inference: {str(e)}"
         )
-    
-    return CommentResponse(
-        text=request.text,
-        sentiment=result["label"],
-        confidence=result["confidence"]
-    )
 
 
 # Define a GET endpoint at route "/health"
