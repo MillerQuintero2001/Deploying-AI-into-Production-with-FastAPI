@@ -45,7 +45,14 @@ def analyze_comment(request: CommentRequest):
             detail="Empty text provided"
         )
         
-    result = sentiment_model(request.text)
+    try:
+        result = sentiment_model(request.text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during model inference: {str(e)}"
+        )
+    
     return CommentResponse(
         text=request.text,
         sentiment=result["label"],
