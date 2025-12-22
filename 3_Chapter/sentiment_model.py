@@ -1,3 +1,4 @@
+import asyncio
 import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -82,6 +83,10 @@ class SentimentAnalyzer:
         }
         return result
     
+    async def async_call(self, text, sleep: int = 11):
+        # Simulate a long-running operation
+        await asyncio.sleep(sleep)
+        return self.__call__(text)
 
 
 class RateLimiter:
