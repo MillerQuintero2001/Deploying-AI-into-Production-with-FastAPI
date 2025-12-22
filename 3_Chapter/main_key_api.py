@@ -6,7 +6,7 @@ import os
 load_dotenv()
 
 # Load environment variables
-API_SECRET_KEY = os.getenv("API_KEY", "default_secret_key")
+API_SECRET_KEY = os.getenv("API_KEY", "your_secret_key")
 
 header_scheme = APIKeyHeader(name="X-API-Key", auto_error=True)
 
@@ -28,4 +28,4 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8005)
 
 
-# curl -X GET "http://localhost:8005/items/" -H "X-API-Key: default_secret_key"
+# curl -X GET "http://localhost:8005/items/" -H "X-API-Key: your_secret_key"

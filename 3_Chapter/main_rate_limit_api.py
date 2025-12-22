@@ -1,4 +1,4 @@
-from sentiment_model import SentimentAnalyzer,initialize_rate_limiter, test_api_key, PATH_TO_MODEL
+from sentiment_model import SentimentAnalyzer,initialize_rate_limiter, test_api_key
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ sentiment_model = None
 
 def load_model():
     global sentiment_model
-    sentiment_model = SentimentAnalyzer(PATH_TO_MODEL)
+    sentiment_model = SentimentAnalyzer()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,13 +81,6 @@ if __name__ == "__main__":
 #   -H "X-API-Key: your_secret_key" \
 #   -H "Content-Type: application/json" \
 #   -d '{"text": "This is not a good product"}'
-
-# curl -X POST \
-#   http://localhost:8080/predict \
-#   -H "X-API-Key: milleresLDS" \
-#   -H "Content-Type: application/json" \
-#   -d '{"text": "This is not a good product"}'
-
 
 # Bad curl example (invalid API key):
 # curl -X POST \

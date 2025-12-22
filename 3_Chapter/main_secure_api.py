@@ -1,4 +1,4 @@
-from sentiment_model import SentimentAnalyzer, verify_api_key, PATH_TO_MODEL
+from sentiment_model import SentimentAnalyzer, verify_api_key
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ sentiment_model = None
 
 def load_model():
     global sentiment_model
-    sentiment_model = SentimentAnalyzer(PATH_TO_MODEL)
+    sentiment_model = SentimentAnalyzer()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

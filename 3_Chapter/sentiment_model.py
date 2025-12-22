@@ -55,9 +55,7 @@ def train_and_save_model():
 
 # Define a callable class
 class SentimentAnalyzer:
-    def __init__(self, model_path):
-        # Load the model using joblib
-
+    def __init__(self, model_path=PATH_TO_MODEL):
         # If model file does not exist, train and save it
         if not Path(model_path).is_file():
             print("[INFO] Training and saving new model...")
@@ -80,9 +78,9 @@ class SentimentAnalyzer:
         # Return dictionary directly instead of JSON string
         result = {
             "label": "Positive" if prediction[0] == 1 else "Negative",
-            "confidence": float(confidence_scores[0][prediction[0]])  
+            "confidence": float(confidence_scores[0][prediction[0]])
         }
-        return result 
+        return result
     
 
 
