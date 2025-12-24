@@ -31,6 +31,7 @@ async def get_model_info(model_id: int):
 
 
 # Create the POST request endpoint
+# NOTE: 'status_code' parameter set default response code to 201, that means 'resource created successfully'
 @app.post("/register-model", status_code=201)
 # Pass the model info from the request as function parameter 
 def register_model(model_info: ModelInfo):
