@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from penguin_model import PenguinClassifier, initialize_rate_limiter, test_api_key
 
 class PenguinV1(BaseModel):
-    culmen_length_mm: float
-    culmen_depth_mm: float
+    bill_length_mm: float
+    bill_depth_mm: float
     flipper_length_mm: int
     body_mass_g: int
 
@@ -46,8 +46,7 @@ def classify_penguin_v1(penguin: PenguinV1, api_key: str = Depends(test_api_key)
         )
     
     try:
-        features = [list(penguin.model_dump().values())]
-        result = classifier(features=features)
+        result = classifier(features=penguin.model_dump())
         return PredictionResponse(**result)
     
     except Exception as e:
@@ -74,8 +73,20 @@ def classify_penguin_v2(penguin: PenguinV2, api_key: str = Depends(test_api_key)
             detail="Empty data provided"
         )
     
+    if not len(penguin.data.split()) == 4:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid data format. Expected 4 space-separated values."
+        )
+
     try:
-        result = classifier(features=[penguin.data.split()])
+        penguin_v1 = PenguinV1(
+            bill_length_mm=float(penguin.data.split()[0]),
+            bill_depth_mm=float(penguin.data.split()[1]),
+            flipper_length_mm=int(penguin.data.split()[2]),
+            body_mass_g=int(penguin.data.split()[3])
+        )
+        result = classifier(features=penguin_v1.model_dump())
         return PredictionResponse(**result)
     
     except Exception as e:
@@ -100,8 +111,8 @@ if __name__ == "__main__":
 #   -H "X-API-Key: your_secret_key" \
 #   -H "Content-Type: application/json" \
 #   -d '{
-#     "culmen_length_mm": 39.1,
-#     "culmen_depth_mm": 18.7,
+#     "bill_length_mm": 39.1,
+#     "bill_depth_mm": 18.7,
 #     "flipper_length_mm": 181,
 #     "body_mass_g": 3750
 #   }'

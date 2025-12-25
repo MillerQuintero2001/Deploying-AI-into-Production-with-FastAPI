@@ -23,12 +23,7 @@ class PenguinClassifier:
     # It allows the instance to be called like a function, like use the prediction method, but with data processing included
     def __call__(self, features):
 
-        df = pd.DataFrame(features, columns=[
-            "bill_length_mm",
-            "bill_depth_mm",
-            "flipper_length_mm",
-            "body_mass_g"
-        ])
+        df = pd.DataFrame([features])
 
         # Get prediction and confidence score
         predictions = self.model.predict(df)
