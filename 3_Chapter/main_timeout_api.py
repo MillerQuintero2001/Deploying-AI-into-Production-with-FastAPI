@@ -15,18 +15,24 @@ class CommentResponse(BaseModel):
     status: str
 
 
-# Is better practice to initialize the model as None, even if
-# it will be declared as global later inside a function
-sentiment_model = None
-
 def load_model():
-    global sentiment_model
-    sentiment_model = SentimentAnalyzer()
+    try:
+        sentiment_model = SentimentAnalyzer()
+        return sentiment_model
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    model = load_model()
+    if not model:
+        raise RuntimeError("Failed to load the sentiment analysis model.")
+    
+    app.state.model = model
     initialize_rate_limiter(requests_per_minute=3)
+    print("[STARTUP] ML API with timeout is ready.")
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown
@@ -39,7 +45,7 @@ app = FastAPI(title="Sentiment Analysis API", lifespan=lifespan)
 async def analyze_reviews(review: CommentRequest,
                           api_key: str = Depends(test_api_key)):
     
-    if sentiment_model is None:
+    if app.state.model is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -53,10 +59,8 @@ async def analyze_reviews(review: CommentRequest,
 
     try:
         # Set model input and timeout limit
-        result = await asyncio.wait_for(
-            sentiment_model.async_call(review.text, sleep = 6),
-            timeout = 5
-        )
+        async with asyncio.timeout(5):
+            result = await app.state.model.async_call(review.text, sleep=6)
         return CommentResponse(
             text=review.text,
             sentiment=result["label"],
