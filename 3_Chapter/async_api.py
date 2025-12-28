@@ -20,18 +20,24 @@ class CommentResponse(BaseModel):
     confidence: float
     status: str
 
-# Is better practice to initialize the model as None, even if
-# it will be declared as global later inside a function
-sentiment_model = None
 
 def load_model():
-    global sentiment_model
-    sentiment_model = SentimentAnalyzer()
+    try:
+        sentiment_model = SentimentAnalyzer()
+        return sentiment_model
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    model = load_model()
+    if not model:
+        raise RuntimeError("Failed to load the sentiment analysis model.")
+    
+    app.state.model = model
     initialize_rate_limiter(requests_per_minute=3)
+    print("[STARTUP] ML API with rate limiting is ready.")
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown
@@ -47,7 +53,7 @@ async def analyze_review(review: CommentRequest,
     api_key: str = Depends(test_api_key)
 ):
     
-    if sentiment_model is None:
+    if app.state.model is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -63,7 +69,7 @@ async def analyze_review(review: CommentRequest,
         # Run the model in a separate thread to avoid any event loop blockage
         # NOTE: If the __call__ method in SentimentAnalyzer is not async, use asyncio.to_thread
         # but if the __call__ method is async, use await directly
-        result = await asyncio.to_thread(sentiment_model, review.text)
+        result = await asyncio.to_thread(app.state.model, review.text)
         return CommentResponse(
             text=review.text,
             sentiment=result["label"],
@@ -85,7 +91,7 @@ async def analyze_batch(
     api_key: str = Depends(test_api_key)
 ):
     
-    if sentiment_model is None:
+    if app.state.model is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -101,7 +107,7 @@ async def analyze_batch(
                 )
             
             try:
-                result = await asyncio.to_thread(sentiment_model, text)
+                result = await asyncio.to_thread(app.state.model, text)
                 print(f"Processed: {result['label']}")
             except Exception as e:
                 raise HTTPException(

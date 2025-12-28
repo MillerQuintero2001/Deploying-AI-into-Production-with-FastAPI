@@ -14,18 +14,24 @@ class CommentResponse(BaseModel):
     confidence: float
     status: str
 
-# Is better practice to initialize the model as None, even if
-# it will be declared as global later inside a function
-sentiment_model = None
 
 def load_model():
-    global sentiment_model
-    sentiment_model = SentimentAnalyzer()
+    try:
+        sentiment_model = SentimentAnalyzer()
+        return sentiment_model
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    model = load_model()
+    if not model:
+        raise RuntimeError("Failed to load the sentiment analysis model.")
+    
+    app.state.model = model
     initialize_rate_limiter(requests_per_minute=3)
+    print("[STARTUP] ML API with rate limiting is ready.")
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown
@@ -44,7 +50,7 @@ def get_prediction(
     api_key: str = Depends(test_api_key)
 ):
     
-    if sentiment_model is None:
+    if app.state.model is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -57,7 +63,7 @@ def get_prediction(
         )
     
     try:
-        result = sentiment_model(request.text)
+        result = app.state.model(request.text)
         return CommentResponse(
             text=request.text,
             sentiment=result["label"],
@@ -75,7 +81,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
-# # Good curl example:
+# Good curl example:
 # curl -X POST \
 #   http://localhost:8080/predict \
 #   -H "X-API-Key: your_secret_key" \
