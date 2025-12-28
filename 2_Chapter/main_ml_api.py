@@ -12,28 +12,39 @@ class CommentResponse(BaseModel):
     sentiment: str
     confidence: float
 
-# Is better practice to initialize the model as None, even if
-# it will be declared as global later inside a function
-sentiment_model = None
 
 def load_model():
-    global sentiment_model
-    sentiment_model = SentimentAnalyzer(PATH_TO_MODEL)
+    if not PATH_TO_MODEL.exists():
+        raise FileNotFoundError(f"Model path {PATH_TO_MODEL} does not exist.")
+
+    try:
+        sentiment_model = SentimentAnalyzer(PATH_TO_MODEL)
+        return sentiment_model
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None     
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    sentiment_model = load_model()
+
+    if not sentiment_model:
+        raise RuntimeError("Failed to load the sentiment analysis model.")
+    
+    app.state.model = sentiment_model
+    print("[STARTUP] ML API is ready.")
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown
     print("[EXIT] Closing ML API...")
+    del app.state.model
 
 app = FastAPI(title="Sentiment Analysis API", lifespan=lifespan)
 
 
 @app.post("/analyze")
 def analyze_comment(request: CommentRequest):
-    if sentiment_model is None:
+    if app.state.model is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -46,7 +57,7 @@ def analyze_comment(request: CommentRequest):
         )
         
     try:
-        result = sentiment_model(request.text)
+        result = app.state.model(request.text)
 
         return CommentResponse(
         text=request.text,
@@ -66,8 +77,8 @@ def analyze_comment(request: CommentRequest):
 def health_check():
   	# Check whether sentiment_model is loaded or not.
     return {
-        "status": "healthy" if sentiment_model is not None else "unhealthy",
-        "model_loaded": sentiment_model is not None
+        "status": "healthy" if app.state.model is not None else "unhealthy",
+        "model_loaded": app.state.model is not None
     }
 
 if __name__ == "__main__":

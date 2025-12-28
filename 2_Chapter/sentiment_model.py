@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from pathlib import Path
+# NOTE: This will launch warnings depending on the way that features are passed to the model
+# Chapter 3 versions address this issue
 
 # Ensure the models directory exists
 Path(__file__).parent.joinpath("models").mkdir(parents=True, exist_ok=True)
