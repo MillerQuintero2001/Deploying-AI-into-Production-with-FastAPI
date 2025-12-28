@@ -20,17 +20,27 @@ class PredictionResponse(BaseModel):
 classifier = None
 
 def load_model():
-    global classifier
-    classifier = PenguinClassifier()
+    try:
+        classifier = PenguinClassifier()
+        return classifier
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    classifier = load_model()
+    if not classifier:
+        raise RuntimeError("Failed to load the penguin classification model.")
+    
+    app.state.classifier = classifier
     initialize_rate_limiter(requests_per_minute=3)
+    print("[STARTUP] Penguin Classifier API is ready.")
     # This indicate to FastAPI that the startup tasks are done
     yield
     # The code after yield is executed during shutdown
     print("[EXIT] Closing ML API...")
+    del app.state.classifier
 
 app = FastAPI(title="Penguin Classifier API",
               description="An API to classify penguin species with versioned endpoints.",
@@ -39,14 +49,14 @@ app = FastAPI(title="Penguin Classifier API",
 @app.post("/v1/penguin_classifier")
 def classify_penguin_v1(penguin: PenguinV1, api_key: str = Depends(test_api_key)):
 
-    if classifier is None:
+    if app.state.classifier is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
         )
     
     try:
-        result = classifier(features=penguin.model_dump())
+        result = app.state.classifier(features=penguin.model_dump())
         return PredictionResponse(**result)
     
     except Exception as e:
@@ -57,11 +67,12 @@ def classify_penguin_v1(penguin: PenguinV1, api_key: str = Depends(test_api_key)
 
 
 # Add v2 endpoint
-@app.post("/v2/penguin_classifier")
+@app.post("/v2/penguin_classifier",
+          description="Classify penguin species using space-separated feature values.")
 # Use v2 model
 def classify_penguin_v2(penguin: PenguinV2, api_key: str = Depends(test_api_key)):
 
-    if classifier is None:
+    if app.state.classifier is None:
         raise HTTPException(
             status_code=503,
             detail="Model not loaded"
@@ -86,7 +97,7 @@ def classify_penguin_v2(penguin: PenguinV2, api_key: str = Depends(test_api_key)
             flipper_length_mm=int(penguin.data.split()[2]),
             body_mass_g=int(penguin.data.split()[3])
         )
-        result = classifier(features=penguin_v1.model_dump())
+        result = app.state.classifier(features=penguin_v1.model_dump())
         return PredictionResponse(**result)
     
     except Exception as e:
@@ -94,12 +105,6 @@ def classify_penguin_v2(penguin: PenguinV2, api_key: str = Depends(test_api_key)
             status_code=500,
             detail=f"Prediction error: {str(e)}"
         )
-
-    # values = penguin.data.split()
-    # result = classifier.predict([values])
-    # confidence = float(max(classifier.predict_proba([values])[0]))
-    # return {"predicted_species": result, "confidence": confidence}
-
 
 
 if __name__ == "__main__":
