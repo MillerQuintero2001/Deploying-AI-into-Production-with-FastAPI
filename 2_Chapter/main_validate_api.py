@@ -42,4 +42,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
-# curl -X POST "http://localhost:8080/register" -H "Content-Type: application/json" -d '{"username": "jane_doe", "email": "jane@mode360.com", "age": 30}'
+# curl -X POST "http://localhost:8080/register" \
+# -H "Content-Type: application/json" \
+# -d '{"username": "jane_doe", "email": "jane@mode360.com", "age": 30}'

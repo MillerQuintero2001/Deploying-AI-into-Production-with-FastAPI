@@ -10,6 +10,10 @@ class ModelInfo(BaseModel):
     model_name: str
     description: str
 
+class RegisterModelResponse(BaseModel):
+    message: str
+    model: ModelInfo
+
 def get_model_details(model_id: int):
     # Simulate fetching model details from a database
     model = model_db.get(model_id)
@@ -32,13 +36,16 @@ async def get_model_info(model_id: int):
 
 # Create the POST request endpoint
 # NOTE: 'status_code' parameter set default response code to 201, that means 'resource created successfully'
-@app.post("/register-model", status_code=201)
+@app.post("/register-model", status_code=201, response_model=RegisterModelResponse)
 # Pass the model info from the request as function parameter 
 def register_model(model_info: ModelInfo):
     # Add new model's information dictionary to the model database
     model_db[model_info.model_id] = model_info.model_dump()
     
-    return {"message": "Model registered successfully", "model": model_info}, 201
+    return RegisterModelResponse(
+        message="Model registered successfully",
+        model=model_info
+    )
 
 
 # curl -X POST "http://localhost:8000/register-model" \
