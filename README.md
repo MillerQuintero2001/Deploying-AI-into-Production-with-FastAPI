@@ -75,6 +75,7 @@ Este capítulo cubre la gestión del ciclo de vida de las aplicaciones, validaci
 
 - **[`main_ml_api.py`](2_Chapter/main_ml_api.py)** - API de análisis de sentimiento con gestión de ciclo de vida
   - Uso de `lifespan` para carga de modelo en startup
+  - **Uso de `app.state` para almacenar el modelo** (evita variables globales)
   - Manejo global de excepciones
   - Validación de entrada vacía
   - Respuestas estructuradas con confianza
@@ -104,6 +105,7 @@ Este capítulo cubre la gestión del ciclo de vida de las aplicaciones, validaci
 **Conceptos clave:**
 - Context managers con `@asynccontextmanager`
 - Gestión de lifespan (startup/shutdown)
+- **Uso de `app.state` para gestión de modelos** (mejora sobre variables globales)
 - Validadores personalizados de Pydantic
 - Clases callable para modelos ML
 - Manejo robusto de errores
@@ -135,7 +137,7 @@ Este capítulo se enfoca en seguridad, rate limiting, operaciones asíncronas y 
   - Ventana deslizante de tiempo
   - Respuesta 429 cuando se excede el límite
   
-- **[`async_api.py`](3_Chapter/async_api.py)** - Endpoints asíncronos
+- **[`main_async_api.py`](3_Chapter/main_async_api.py)** - Endpoints asíncronos
   - Uso de `async/await` para operaciones no bloqueantes
   - `asyncio.to_thread()` para código síncrono
   - Procesamiento en background con `BackgroundTasks`
@@ -192,7 +194,7 @@ Este capítulo cubre técnicas avanzadas de producción: versionado de APIs, log
   - ✅ **Validaciones complejas** con Pydantic validators
   - ✅ **Autenticación** con API keys
   - ✅ **Rate limiting**
-  - ✅ **Gestión de ciclo de vida** (startup/shutdown)
+  - ✅ **Gestión de ciclo de vida mejorada** con `app.state.classifier` (sin variables globales)
   - ✅ **Manejo de errores** robusto con códigos HTTP apropiados
   - ✅ **Serialización segura** de parámetros del modelo
   - ✅ **Respuestas en texto plano** para health checks
@@ -299,6 +301,7 @@ curl -X POST "http://localhost:8080/v1/register_inventory" \
 
 2. **Gestión del Ciclo de Vida**
    - Carga de modelos en startup
+   - **Uso de `app.state` en lugar de variables globales** para almacenar modelos
    - Limpieza de recursos en shutdown
    - Context managers asíncronos
 
